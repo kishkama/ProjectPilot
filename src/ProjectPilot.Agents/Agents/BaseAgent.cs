@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoGen;
+using AutoGen.Core;
 using Microsoft.Extensions.Logging;
 using ProjectPilot.Agents.Contracts;
 using ProjectPilot.LLM;
@@ -11,16 +13,25 @@ namespace ProjectPilot.Agents.Agents;
 /// <summary>
 /// Base class for all ProjectPilot agents providing common functionality
 /// </summary>
-public abstract class BaseAgent : IAgent
+public abstract class BaseAgent : Contracts.IAgent
 {
     protected readonly ILLMProvider _llmProvider;
     protected readonly ILogger _logger;
+    protected readonly AssistantAgent _autoGenAgent;
 
-    protected BaseAgent(ILLMProvider llmProvider, ILogger logger)
+    protected BaseAgent(ILLMProvider llmProvider, ILogger logger, string agentName)
     {
         _llmProvider = llmProvider;
         _logger = logger;
+        
+        // Create AutoGen agent with basic configuration
+        _autoGenAgent = new AssistantAgent(
+            name: agentName,
+            systemMessage: GetSystemPrompt(),
+            llmConfig: null); // Will be configured with custom LLM integration
     }
+
+    protected abstract string GetSystemPrompt();
 
     public abstract string Name { get; }
     public abstract AgentType AgentType { get; }

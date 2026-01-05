@@ -25,6 +25,18 @@ public record ChatResponse
     public bool IsComplete { get; init; }
 }
 
+public record UsageDetails
+{
+    public int? PromptTokens { get; init; }
+    public int? CompletionTokens { get; init; }
+    public int? TotalTokens { get; init; }
+    
+    // Aliases for backward compatibility
+    public int? InputTokenCount => PromptTokens;
+    public int? OutputTokenCount => CompletionTokens;
+    public int? TotalTokenCount => TotalTokens;
+}
+
 public interface ILLMProvider
 {
     Task<ChatResponse> ChatAsync(ChatRequest request, CancellationToken cancellationToken = default);

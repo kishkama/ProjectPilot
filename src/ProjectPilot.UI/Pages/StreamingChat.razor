@@ -1,0 +1,215 @@
+@using System.Net.Http
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Class="pa-4" Elevation="3">
+        <MudText Typo="Typo.h4" GutterBottom="true">ProjectPilot Streaming Chat</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Real-time streaming responses from our AI agents
+        </MudText>
+
+        <!-- Provider Selection -->
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="4">
+                <MudSelect @bind-Value="selectedProvider" Label="LLM Provider" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@("azure-openai")">Azure OpenAI</MudSelectItem>
+                    <MudSelectItem Value="@("gemini")">Google Gemini</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Chat Messages -->
+        <MudPaper Class="mt-4 mb-4" Style="height: 500px; overflow-y: auto;" Elevation="1">
+            <MudList T="StreamingMessage" Clickable="false">
+                @foreach (var message in messages)
+                {
+                    <MudListItem T="StreamingMessage">
+                        <MudListItemIcon>
+                            @if (message.Role == "user")
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.SmartToy" Color="Color.Secondary" />
+                            }
+                        </MudListItemIcon>
+                        <MudListItemText>
+                            <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">
+                                @message.Content
+                                @if (message.IsStreaming)
+                                {
+                                    <MudText Typo="Typo.body1" Color="Color.Info" Inline="true">|</MudText>
+                                }
+                            </MudText>
+                            @if (!string.IsNullOrEmpty(message.Agent))
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Info">
+                                    Agent: @message.Agent
+                                </MudText>
+                            }
+                        </MudListItemText>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+        </MudPaper>
+
+        <!-- Agent Activity Indicator -->
+        @if (isStreaming)
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-4">
+                <MudText Typo="Typo.body2">
+                    <MudIcon Icon="@Icons.Material.Filled.Sync" Class="mr-2" />
+                    Agent is thinking... (@currentAgent)
+                </MudText>
+            </MudAlert>
+        }
+
+        <!-- Message Input -->
+        <MudGrid>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="currentMessage"
+                              Label="Type your message..."
+                              Variant="Variant.Outlined"
+                              FullWidth="true"
+                              OnKeyDown="HandleKeyDown"
+                              Disabled="isStreaming" />
+            </MudItem>
+            <MudItem xs="12" Class="d-flex justify-end">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Send"
+                           OnClick="SendStreamingMessage"
+                           Disabled="isStreaming || string.IsNullOrWhiteSpace(currentMessage)">
+                    @(isStreaming ? "Streaming..." : "Send & Stream")
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string selectedProvider = "azure-openai";
+    private string currentMessage = "";
+    private bool isStreaming = false;
+    private string currentAgent = "";
+    private List<StreamingMessage> messages = new();
+    private string sessionId = Guid.NewGuid().ToString();
+
+    private async Task SendStreamingMessage()
+    {
+        if (string.IsNullOrWhiteSpace(currentMessage) || isStreaming)
+            return;
+
+        var message = currentMessage;
+        currentMessage = "";
+        isStreaming = true;
+        currentAgent = "Processing...";
+
+        // Add user message to UI
+        messages.Add(new StreamingMessage { Role = "user", Content = message });
+        StateHasChanged();
+
+        try
+        {
+            // Start streaming response
+            var streamingMessage = new StreamingMessage { Role = "assistant", Content = "", IsStreaming = true };
+            messages.Add(streamingMessage);
+
+            // Send message to streaming API
+            var request = new StreamingChatRequest { Message = message, SessionId = sessionId };
+            var response = await Http.PostAsJsonAsync("api/chat/stream", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                using var stream = await response.Content.ReadAsStreamAsync();
+                using var reader = new StreamReader(stream);
+
+                string? line;
+                while ((line = await reader.ReadLineAsync()) != null)
+                {
+                    if (line.StartsWith("data: "))
+                    {
+                        var data = line.Substring(6);
+                        if (data == "[DONE]")
+                        {
+                            streamingMessage.IsStreaming = false;
+                            isStreaming = false;
+                            currentAgent = "";
+                            break;
+                        }
+
+                        try
+                        {
+                            var chunk = System.Text.Json.JsonSerializer.Deserialize<StreamChunk>(data);
+                            if (chunk != null)
+                            {
+                                streamingMessage.Content += chunk.Content;
+                                if (!string.IsNullOrEmpty(chunk.Agent))
+                                {
+                                    streamingMessage.Agent = chunk.Agent;
+                                    currentAgent = chunk.Agent;
+                                }
+                                StateHasChanged();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error parsing chunk: {ex.Message}");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Snackbar.Add("Failed to start streaming. Please try again.", Severity.Error);
+                isStreaming = false;
+                currentAgent = "";
+                streamingMessage.IsStreaming = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            isStreaming = false;
+            currentAgent = "";
+            if (messages.Any() && messages.Last().IsStreaming)
+            {
+                messages.Last().IsStreaming = false;
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendStreamingMessage();
+        }
+    }
+
+    public class StreamingChatRequest
+    {
+        public string Message { get; set; } = "";
+        public string? SessionId { get; set; }
+    }
+
+    public class StreamChunk
+    {
+        public string Content { get; set; } = "";
+        public string Agent { get; set; } = "";
+        public bool IsComplete { get; set; }
+    }
+
+    public class StreamingMessage
+    {
+        public string Role { get; set; } = "";
+        public string Content { get; set; } = "";
+        public string Agent { get; set; } = "";
+        public bool IsStreaming { get; set; }
+    }
+}

@@ -1,0 +1,18 @@
+{
+    "dotnet.defaultSolution": "project_pilot.sln",
+    "csharp.format.enable": true,
+    "csharp.suppressDotnetRestoreNotification": true,
+    "omnisharp.enableEditorConfigSupport": true,
+    "omnisharp.enableRoslynAnalyzers": true,
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true,
+        "**/.git": true,
+        "**/.vscode": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bin": true,
+        "**/obj": true
+    }
+}

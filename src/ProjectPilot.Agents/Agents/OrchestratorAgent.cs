@@ -50,11 +50,13 @@ public class OrchestratorAgent : BaseAgent
         IAgentRegistry agentRegistry,
         IAgentCommunicationService communicationService,
         ILogger<OrchestratorAgent> logger)
-        : base(llmProvider, logger)
+        : base(llmProvider, logger, "Orchestrator")
     {
         _agentRegistry = agentRegistry;
         _communicationService = communicationService;
     }
+
+    protected override string GetSystemPrompt() => SystemPrompt;
 
     public override async Task<AgentResponse> ProcessAsync(
         AgentMessage message,

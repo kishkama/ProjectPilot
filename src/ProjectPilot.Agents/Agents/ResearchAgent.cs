@@ -55,11 +55,13 @@ public class ResearchAgent : BaseAgent
         IWebSearchTool webSearchTool,
         IMemoryStore memoryStore,
         ILogger<ResearchAgent> logger)
-        : base(llmProvider, logger)
+        : base(llmProvider, logger, "Research")
     {
         _webSearchTool = webSearchTool;
         _memoryStore = memoryStore;
     }
+
+    protected override string GetSystemPrompt() => SystemPrompt;
 
     public override async Task<AgentResponse> ProcessAsync(
         AgentMessage message,

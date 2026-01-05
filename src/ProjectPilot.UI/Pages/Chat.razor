@@ -1,0 +1,165 @@
+@page "/chat"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<PageTitle>ProjectPilot Chat</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Class="pa-4" Elevation="3">
+        <MudText Typo="Typo.h4" GutterBottom="true">ProjectPilot AI Assistant</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Chat with our multi-agent AI system powered by AutoGen.Net
+        </MudText>
+
+        <!-- Provider Selection -->
+        <MudGrid>
+            <MudItem xs="12" sm="6" md="4">
+                <MudSelect @bind-Value="selectedProvider" Label="LLM Provider" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@("azure-openai")">Azure OpenAI</MudSelectItem>
+                    <MudSelectItem Value="@("gemini")">Google Gemini</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Chat Messages -->
+        <MudPaper Class="mt-4 mb-4" Style="height: 500px; overflow-y: auto;" Elevation="1">
+            <MudList T="ChatMessage" Clickable="false">
+                @foreach (var message in messages)
+                {
+                    <MudListItem T="ChatMessage">
+                        <MudListItemIcon>
+                            @if (message.Role == "user")
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.SmartToy" Color="Color.Secondary" />
+                            }
+                        </MudListItemIcon>
+                        <MudListItemText>
+                            <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">
+                                @message.Content
+                            </MudText>
+                            @if (!string.IsNullOrEmpty(message.Agent))
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Info">
+                                    Agent: @message.Agent
+                                </MudText>
+                            }
+                        </MudListItemText>
+                    </MudListItem>
+                    <MudDivider />
+                }
+            </MudList>
+        </MudPaper>
+
+        <!-- Message Input -->
+        <MudGrid>
+            <MudItem xs="12">
+                <MudTextField @bind-Value="currentMessage"
+                              Label="Type your message..."
+                              Variant="Variant.Outlined"
+                              FullWidth="true"
+                              OnKeyDown="HandleKeyDown"
+                              Disabled="isLoading" />
+            </MudItem>
+            <MudItem xs="12" Class="d-flex justify-end">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Send"
+                           OnClick="SendMessage"
+                           Disabled="isLoading || string.IsNullOrWhiteSpace(currentMessage)">
+                    @(isLoading ? "Thinking..." : "Send Message")
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string selectedProvider = "azure-openai";
+    private string currentMessage = "";
+    private bool isLoading = false;
+    private List<ChatMessage> messages = new();
+    private string sessionId = Guid.NewGuid().ToString();
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(currentMessage) || isLoading)
+            return;
+
+        var message = currentMessage;
+        currentMessage = "";
+        isLoading = true;
+
+        // Add user message to UI
+        messages.Add(new ChatMessage { Role = "user", Content = message });
+        StateHasChanged();
+
+        try
+        {
+            // Send message to API
+            var request = new ChatRequest { Message = message, SessionId = sessionId };
+            var response = await Http.PostAsJsonAsync("api/chat", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ChatResponse>();
+                if (result != null)
+                {
+                    sessionId = result.SessionId;
+                    messages.Add(new ChatMessage
+                    {
+                        Role = "assistant",
+                        Content = result.Message,
+                        Agent = result.Agent
+                    });
+                }
+            }
+            else
+            {
+                Snackbar.Add("Failed to send message. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendMessage();
+        }
+    }
+
+    public class ChatRequest
+    {
+        public string Message { get; set; } = "";
+        public string? SessionId { get; set; }
+    }
+
+    public class ChatResponse
+    {
+        public string SessionId { get; set; } = "";
+        public string Message { get; set; } = "";
+        public object? Usage { get; set; }
+        public string Agent { get; set; } = "";
+        public long DurationMs { get; set; }
+    }
+
+    public class ChatMessage
+    {
+        public string Role { get; set; } = "";
+        public string Content { get; set; } = "";
+        public string? Agent { get; set; }
+    }
+}

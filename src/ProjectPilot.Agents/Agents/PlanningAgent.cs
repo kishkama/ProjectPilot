@@ -50,10 +50,12 @@ public class PlanningAgent : BaseAgent
         ILLMProvider llmProvider,
         IMemoryStore memoryStore,
         ILogger<PlanningAgent> logger)
-        : base(llmProvider, logger)
+        : base(llmProvider, logger, "Planning")
     {
         _memoryStore = memoryStore;
     }
+
+    protected override string GetSystemPrompt() => SystemPrompt;
 
     public override async Task<AgentResponse> ProcessAsync(
         AgentMessage message,

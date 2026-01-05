@@ -62,10 +62,12 @@ public class ReportingAgent : BaseAgent
         ILLMProvider llmProvider,
         IMemoryStore memoryStore,
         ILogger<ReportingAgent> logger)
-        : base(llmProvider, logger)
+        : base(llmProvider, logger, "Reporting")
     {
         _memoryStore = memoryStore;
     }
+
+    protected override string GetSystemPrompt() => SystemPrompt;
 
     public override async Task<AgentResponse> ProcessAsync(
         AgentMessage message,

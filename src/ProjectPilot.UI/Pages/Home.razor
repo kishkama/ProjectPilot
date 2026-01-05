@@ -1,0 +1,65 @@
+﻿@page "/"
+
+<PageTitle>ProjectPilot - AI Assistant</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudPaper Class="pa-6" Elevation="4">
+        <div class="text-center mb-6">
+            <MudIcon Icon="@Icons.Material.Filled.SmartToy" Size="Size.Large" Color="Color.Primary" Class="mb-4" />
+            <MudText Typo="Typo.h3" GutterBottom="true">ProjectPilot</MudText>
+            <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mb-4">
+                Multi-Agent AI Assistant Platform
+            </MudText>
+            <MudText Typo="Typo.body1" Class="mb-6">
+                Experience intelligent conversations powered by AutoGen.Net with support for Azure OpenAI and Google Gemini.
+            </MudText>
+        </div>
+
+        <MudGrid Spacing="4">
+            <MudItem xs="12" sm="6">
+                <MudCard Elevation="3" Class="h-100">
+                    <MudCardContent Class="text-center pa-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Large" Color="Color.Primary" Class="mb-3" />
+                        <MudText Typo="Typo.h6" GutterBottom="true">Standard Chat</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                            Interactive chat with complete responses from our AI agents.
+                        </MudText>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Href="/chat"
+                                   FullWidth="true">
+                            Start Chatting
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudCard Elevation="3" Class="h-100">
+                    <MudCardContent Class="text-center pa-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Stream" Size="Size.Large" Color="Color.Secondary" Class="mb-3" />
+                        <MudText Typo="Typo.h6" GutterBottom="true">Streaming Chat</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                            Real-time streaming responses as agents think and respond.
+                        </MudText>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   Href="/streaming-chat"
+                                   FullWidth="true">
+                            Start Streaming
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider Class="my-6" />
+
+        <div class="text-center">
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-1" />
+                Built with .NET 8, AutoGen.Net, and MudBlazor
+            </MudText>
+        </div>
+    </MudPaper>
+</MudContainer>
