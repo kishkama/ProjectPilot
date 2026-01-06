@@ -13,21 +13,24 @@ public class MemoryStoreFactory : IMemoryStoreFactory
 {
     private readonly RedisMemoryStore _redisStore;
     private readonly CosmosMemoryStore _cosmosStore;
+    private readonly InMemoryMemoryStore _inMemoryStore;
     private readonly MemoryOptions _options;
 
     public MemoryStoreFactory(
         RedisMemoryStore redisStore,
         CosmosMemoryStore cosmosStore,
+        InMemoryMemoryStore inMemoryStore,
         IOptions<MemoryOptions> options)
     {
         _redisStore = redisStore;
         _cosmosStore = cosmosStore;
+        _inMemoryStore = inMemoryStore;
         _options = options.Value;
     }
 
-    public IMemoryStore CreateShortTermStore() => _redisStore;
+    public IMemoryStore CreateShortTermStore() => _inMemoryStore;
 
-    public IMemoryStore CreateLongTermStore() => _cosmosStore;
+    public IMemoryStore CreateLongTermStore() => _inMemoryStore;
 
     public IMemoryStore GetDefaultStore()
     {
@@ -35,7 +38,8 @@ public class MemoryStoreFactory : IMemoryStoreFactory
         {
             "redis" => _redisStore,
             "cosmos" => _cosmosStore,
-            _ => _redisStore
+            "inmemory" => _inMemoryStore,
+            _ => _inMemoryStore
         };
     }
 }

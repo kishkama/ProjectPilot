@@ -24,7 +24,8 @@ public static class AgentServiceCollectionExtensions
         // Register agents with dependencies
         services.AddSingleton<IAgent>(sp =>
         {
-            var llmProvider = sp.GetRequiredService<ILLMProvider>();
+            var llmProviderFactory = sp.GetRequiredService<ILLMProviderFactory>();
+            var llmProvider = llmProviderFactory.GetDefaultProvider();
             var agentRegistry = sp.GetRequiredService<IAgentRegistry>();
             var communicationService = sp.GetRequiredService<IAgentCommunicationService>();
             var logger = sp.GetRequiredService<ILogger<OrchestratorAgent>>();
@@ -33,7 +34,8 @@ public static class AgentServiceCollectionExtensions
 
         services.AddSingleton<IAgent>(sp =>
         {
-            var llmProvider = sp.GetRequiredService<ILLMProvider>();
+            var llmProviderFactory = sp.GetRequiredService<ILLMProviderFactory>();
+            var llmProvider = llmProviderFactory.GetDefaultProvider();
             var memoryStore = sp.GetRequiredService<IMemoryStore>();
             var logger = sp.GetRequiredService<ILogger<PlanningAgent>>();
             return new PlanningAgent(llmProvider, memoryStore, logger);
@@ -41,7 +43,8 @@ public static class AgentServiceCollectionExtensions
 
         services.AddSingleton<IAgent>(sp =>
         {
-            var llmProvider = sp.GetRequiredService<ILLMProvider>();
+            var llmProviderFactory = sp.GetRequiredService<ILLMProviderFactory>();
+            var llmProvider = llmProviderFactory.GetDefaultProvider();
             var webSearchTool = sp.GetRequiredService<IWebSearchTool>();
             var memoryStore = sp.GetRequiredService<IMemoryStore>();
             var logger = sp.GetRequiredService<ILogger<ResearchAgent>>();
@@ -50,7 +53,8 @@ public static class AgentServiceCollectionExtensions
 
         services.AddSingleton<IAgent>(sp =>
         {
-            var llmProvider = sp.GetRequiredService<ILLMProvider>();
+            var llmProviderFactory = sp.GetRequiredService<ILLMProviderFactory>();
+            var llmProvider = llmProviderFactory.GetDefaultProvider();
             var memoryStore = sp.GetRequiredService<IMemoryStore>();
             var logger = sp.GetRequiredService<ILogger<ReportingAgent>>();
             return new ReportingAgent(llmProvider, memoryStore, logger);

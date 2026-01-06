@@ -23,31 +23,31 @@
 
         <!-- Chat Messages -->
         <MudPaper Class="mt-4 mb-4" Style="height: 500px; overflow-y: auto;" Elevation="1">
-            <MudList T="ChatMessage" Clickable="false">
+            <MudList T="object">
                 @foreach (var message in messages)
                 {
-                    <MudListItem T="ChatMessage">
-                        <MudListItemIcon>
+                    <MudListItem T="object">
+                        <div class="d-flex align-center">
                             @if (message.Role == "user")
                             {
-                                <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
+                                <MudIcon Icon="Person" Color="Color.Primary" Class="mr-3" />
                             }
                             else
                             {
-                                <MudIcon Icon="@Icons.Material.Filled.SmartToy" Color="Color.Secondary" />
+                                <MudIcon Icon="SmartToy" Color="Color.Secondary" Class="mr-3" />
                             }
-                        </MudListItemIcon>
-                        <MudListItemText>
-                            <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">
-                                @message.Content
-                            </MudText>
-                            @if (!string.IsNullOrEmpty(message.Agent))
-                            {
-                                <MudText Typo="Typo.caption" Color="Color.Info">
-                                    Agent: @message.Agent
+                            <div class="flex-grow-1">
+                                <MudText Typo="Typo.body1" Style="white-space: pre-wrap;">
+                                    @message.Content
                                 </MudText>
-                            }
-                        </MudListItemText>
+                                @if (!string.IsNullOrEmpty(message.Agent))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Info">
+                                        Agent: @message.Agent
+                                    </MudText>
+                                }
+                            </div>
+                        </div>
                     </MudListItem>
                     <MudDivider />
                 }
@@ -67,7 +67,7 @@
             <MudItem xs="12" Class="d-flex justify-end">
                 <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Send"
+                           StartIcon="@Send"
                            OnClick="SendMessage"
                            Disabled="isLoading || string.IsNullOrWhiteSpace(currentMessage)">
                     @(isLoading ? "Thinking..." : "Send Message")

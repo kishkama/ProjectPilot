@@ -72,6 +72,70 @@ public enum MemoryType
     Activity
 }
 
+public class InMemoryMemoryStore : IMemoryStore
+{
+    private readonly Dictionary<string, MemoryEntry> _store = new();
+    private readonly Dictionary<string, List<string>> _sessionIndex = new();
+
+    public Task StoreAsync(MemoryEntry entry, CancellationToken cancellationToken = default)
+    {
+        _store[entry.Id] = entry;
+        
+        var sessionKey = $"{entry.SessionId}:{entry.Type}";
+        if (!_sessionIndex.ContainsKey(sessionKey))
+        {
+            _sessionIndex[sessionKey] = new List<string>();
+        }
+        if (!_sessionIndex[sessionKey].Contains(entry.Id))
+        {
+            _sessionIndex[sessionKey].Add(entry.Id);
+        }
+        
+        return Task.CompletedTask;
+    }
+
+    public Task<MemoryEntry?> GetAsync(string key, CancellationToken cancellationToken = default)
+    {
+        _store.TryGetValue(key, out var entry);
+        return Task.FromResult(entry);
+    }
+
+    public Task<List<MemoryEntry>> SearchAsync(string query, string? projectId = null, int limit = 10, CancellationToken cancellationToken = default)
+    {
+        var results = _store.Values
+            .Where(e => e.Content.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Take(limit)
+            .ToList();
+        return Task.FromResult(results);
+    }
+
+    public Task<List<MemoryEntry>> GetBySessionAsync(string sessionId, MemoryType type, CancellationToken cancellationToken = default)
+    {
+        var sessionKey = $"{sessionId}:{type}";
+        var entryIds = _sessionIndex.GetValueOrDefault(sessionKey, new List<string>());
+        var entries = entryIds
+            .Select(id => _store.GetValueOrDefault(id))
+            .Where(e => e != null)
+            .Cast<MemoryEntry>()
+            .ToList();
+        return Task.FromResult(entries);
+    }
+
+    public Task DeleteBySessionAsync(string sessionId, MemoryType type, CancellationToken cancellationToken = default)
+    {
+        var sessionKey = $"{sessionId}:{type}";
+        if (_sessionIndex.TryGetValue(sessionKey, out var entryIds))
+        {
+            foreach (var id in entryIds)
+            {
+                _store.Remove(id);
+            }
+            _sessionIndex.Remove(sessionKey);
+        }
+        return Task.CompletedTask;
+    }
+}
+
 // public enum MemoryType
 // {
 //     Conversation,  // For chat history

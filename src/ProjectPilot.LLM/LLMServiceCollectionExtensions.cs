@@ -43,6 +43,7 @@ public static class LLMServiceCollectionExtensions
         // Register memory stores
         services.AddSingleton<RedisMemoryStore>();
         services.AddSingleton<CosmosMemoryStore>();
+        services.AddSingleton<InMemoryMemoryStore>();
 
         // Register memory store factory
         services.AddSingleton<IMemoryStoreFactory, MemoryStoreFactory>();

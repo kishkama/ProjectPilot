@@ -7,7 +7,8 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+// Configure HttpClient to point to the API server
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5242") });
 
 // Add MudBlazor services
 builder.Services.AddMudServices();
