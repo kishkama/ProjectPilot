@@ -15,19 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "ProjectPilot API",
-        Version = "v1",
-        Description = "Multi-agent AI assistant platform with AutoGen.Net integration",
-        Contact = new Microsoft.OpenApi.Models.OpenApiContact
-        {
-            Name = "ProjectPilot Team"
-        }
-    });
-});
+builder.Services.AddOpenApi();
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -69,8 +57,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
